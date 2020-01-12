@@ -1,5 +1,4 @@
 use crate::board::Board;
-use crate::action::Action;
 
 pub struct Game {
   goal: u32,
@@ -15,14 +14,35 @@ impl Game {
   }
 
   pub fn win(&self) -> bool {
-    false
+    self.board.has_block_with(self.goal)
   }
 
   pub fn lose(&self) -> bool {
-    false
+    self.board.has_empty_block()
   }
 
-  pub fn play(&self, mv: &Action) {
+  pub fn move_up(mut self) {
+    if self.board.try_to_move_up() {
+      self.board.put_new_block();
+    }
+  }
+
+  pub fn move_down(mut self) {
+    if self.board.try_to_move_down() {
+      self.board.put_new_block();
+    }
+  }
+
+  pub fn move_left(mut self) {
+    if self.board.try_to_move_left() {
+      self.board.put_new_block();
+    }
+  }
+
+  pub fn move_right(mut self) {
+    if self.board.try_to_move_right() {
+      self.board.put_new_block();
+    }
   }
 }
 

@@ -1,4 +1,5 @@
-use crate::action::Action;
+use rand::Rng;
+use rand::seq::SliceRandom;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -17,7 +18,66 @@ impl Board {
     }
   }
 
-  pub fn move_blocks(&self, mv: &Action) {
+  pub fn try_to_move_up(&self) -> bool {
+    true
+  }
+
+  pub fn try_to_move_down(&self) -> bool {
+    true
+  }
+
+  pub fn try_to_move_left(&self) -> bool {
+    true
+  }
+
+  pub fn try_to_move_right(&self) -> bool {
+    true
+  }
+
+  fn pick_empty_index(&self) -> Option<(u32, u32)> {
+    let mut indexes = Vec::new();
+
+    for i in 0..self.height {
+      for j in 0..self.width {
+        if self.blocks[i as usize][j as usize] == None {
+          indexes.push((i, j));
+        }
+      }
+    }
+
+    let mut rng = rand::thread_rng();
+
+    indexes.choose(&mut rng).map(|index| (index.0, index.1))
+  }
+
+  fn create_new_block(&self) -> u32 {
+    let mut rng = rand::thread_rng();
+
+    rng.gen_range(1, 3) * 2
+  }
+
+  pub fn has_empty_block(&self) -> bool {
+    self.pick_empty_index().is_some()
+  }
+
+  pub fn put_new_block(mut self) -> Option<(u32, u32, u32)> {
+    let block = self.create_new_block();
+    let index = self.pick_empty_index()?;
+
+    self.blocks[index.0 as usize][index.1 as usize] = Some(block);
+    Some((index.0, index.1, block))
+  }
+
+  pub fn has_block_with(&self, value: u32) -> bool {
+    for row in &self.blocks {
+      for block in row {
+        if *block == Some(value) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   fn eq(&self, other: &Board) -> bool {

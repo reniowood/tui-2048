@@ -25,3 +25,19 @@ impl Game {
   pub fn play(&self, mv: &Action) {
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_Game_new() {
+    let goal = 2048;
+    let width = 4;
+    let height = 4;
+    let game = Game::new(goal, width, height);
+
+    assert_eq!(game.goal, goal);
+    assert_eq!(game.board, Board::new(width, height));
+  }
+}

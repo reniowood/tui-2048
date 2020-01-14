@@ -1,40 +1,135 @@
 use rand::Rng;
 use rand::seq::SliceRandom;
 
-#[derive(PartialEq)]
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Board {
-  width: u32,
-  height: u32,
+  width: usize,
+  height: usize,
   blocks: Vec<Vec<Option<u32>>>
 }
 
 impl Board {
-  pub fn new(width: u32, height: u32) -> Board {
+  pub fn new(width: usize, height: usize) -> Board {
     Board {
       width: width, 
       height: height,
-      blocks: vec![vec![None; width as usize]; height as usize],
+      blocks: vec![vec![None; width]; height],
     }
   }
 
-  pub fn try_to_move_up(&self) -> bool {
-    true
+  pub fn try_to_move_up(&mut self) -> bool {
+    let mut success = false;
+
+    for j in 0..self.width {
+      for i in 0..self.height {
+        let mut k = i;
+
+        while k >= 1 && self.blocks[k - 1][j].is_none() {
+          k -= 1;
+        }
+
+        if k >= 1 && self.blocks[k - 1][j] == self.blocks[i][j] {
+          self.blocks[k - 1][j] = self.blocks[i][j].map(|x| x * 2);
+
+          success = true;
+          self.blocks[i][j] = None;
+        } else if k != i {
+          self.blocks[k][j] = self.blocks[i][j];
+        
+          success = true;
+          self.blocks[i][j] = None;
+        }
+      }
+    }
+
+    success
   }
 
-  pub fn try_to_move_down(&self) -> bool {
-    true
+  pub fn try_to_move_down(&mut self) -> bool {
+    let mut success = false;
+
+    for j in 0..self.width {
+      for i in (0..self.height).rev() {
+        let mut k = i;
+
+        while k + 1 < self.height && self.blocks[k + 1][j] == None {
+          k += 1;
+        }
+
+        if k + 1 < self.height && self.blocks[k + 1][j] == self.blocks[i][j] {
+          self.blocks[k + 1][j] = self.blocks[i][j].map(|x| x * 2);
+
+          success = true;
+          self.blocks[i][j] = None;
+        } else if k != i {
+          self.blocks[k][j] = self.blocks[i][j];
+
+          success = true;
+          self.blocks[i][j] = None;
+        }
+      }
+    }
+
+    success
   }
 
-  pub fn try_to_move_left(&self) -> bool {
-    true
+  pub fn try_to_move_left(&mut self) -> bool {
+    let mut success = false;
+
+    for i in 0..self.height {
+      for j in 0..self.width {
+        let mut k = j;
+
+        while k >= 1 && self.blocks[i][k - 1] == None {
+          k -= 1;
+        }
+
+        if k >= 1 && self.blocks[i][k - 1] == self.blocks[i][j] {
+          self.blocks[i][k - 1] = self.blocks[i][j].map(|x| x * 2);
+
+          success = true;
+          self.blocks[i][j] = None;
+        } else if k != j {
+          self.blocks[i][k] = self.blocks[i][j];
+
+          success = true;
+          self.blocks[i][j] = None;
+        }
+      }
+    }
+
+    success
   }
 
-  pub fn try_to_move_right(&self) -> bool {
-    true
+  pub fn try_to_move_right(&mut self) -> bool {
+    let mut success = false;
+
+    for i in 0..self.height {
+      for j in (0..self.width).rev() {
+        let mut k = j;
+
+        while k + 1 < self.width && self.blocks[i][k + 1] == None {
+          k += 1;
+        }
+
+        if k + 1 < self.width && self.blocks[i][k + 1] == self.blocks[i][j] {
+          self.blocks[i][k + 1] = self.blocks[i][j].map(|x| x * 2);
+
+          success = true;
+          self.blocks[i][j] = None;
+        } else if k != j {
+          self.blocks[i][k] = self.blocks[i][j];
+
+          success = true;
+          self.blocks[i][j] = None;
+        }
+      }
+    }
+
+    success
   }
 
-  fn pick_empty_index(&self) -> Option<(u32, u32)> {
+  fn pick_empty_index(&self) -> Option<(usize, usize)> {
     let mut indexes = Vec::new();
 
     for i in 0..self.height {
@@ -60,7 +155,7 @@ impl Board {
     self.pick_empty_index().is_some()
   }
 
-  pub fn put_new_block(mut self) -> Option<(u32, u32, u32)> {
+  pub fn put_new_block(&mut self) -> Option<(usize, usize, u32)> {
     let block = self.create_new_block();
     let index = self.pick_empty_index()?;
 
@@ -78,6 +173,19 @@ impl Board {
     }
 
     return false;
+  }
+
+  pub fn print(&self) {
+    for row in &self.blocks {
+      for block in row {
+        match block {
+          Some(value) => print!("{:4}", value),
+          None => print!("    ")
+        }
+        print!("|");
+      }
+      println!("")
+    }
   }
 
   fn eq(&self, other: &Board) -> bool {

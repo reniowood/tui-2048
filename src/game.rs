@@ -6,10 +6,15 @@ pub struct Game {
 }
 
 impl Game {
-  pub fn new(goal: u32, width: u32, height: u32) -> Game {
+  pub fn new(goal: u32, width: usize, height: usize) -> Game {
+    let mut board = Board::new(width, height);
+
+    board.put_new_block();
+    board.put_new_block();
+
     Game {
       goal: goal,
-      board: Board::new(width, height),
+      board: board,
     }
   }
 
@@ -18,31 +23,35 @@ impl Game {
   }
 
   pub fn lose(&self) -> bool {
-    self.board.has_empty_block()
+    !self.board.has_empty_block()
   }
 
-  pub fn move_up(mut self) {
+  pub fn move_up(&mut self) {
     if self.board.try_to_move_up() {
       self.board.put_new_block();
     }
   }
 
-  pub fn move_down(mut self) {
+  pub fn move_down(&mut self) {
     if self.board.try_to_move_down() {
       self.board.put_new_block();
     }
   }
 
-  pub fn move_left(mut self) {
+  pub fn move_left(&mut self) {
     if self.board.try_to_move_left() {
       self.board.put_new_block();
     }
   }
 
-  pub fn move_right(mut self) {
+  pub fn move_right(&mut self) {
     if self.board.try_to_move_right() {
       self.board.put_new_block();
     }
+  }
+
+  pub fn print_board(&self) {
+    self.board.print()
   }
 }
 

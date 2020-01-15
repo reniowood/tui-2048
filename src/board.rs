@@ -1,5 +1,6 @@
 use rand::Rng;
 use rand::seq::SliceRandom;
+use std::collections::VecDeque;
 
 #[derive(PartialEq, Debug)]
 pub struct Board {
@@ -21,25 +22,35 @@ impl Board {
     let mut success = false;
 
     for j in 0..self.width {
+      let mut queue: VecDeque<u32> = VecDeque::new();
+
+      let mut old_last_index = 0;
+
       for i in 0..self.height {
-        let mut k = i;
-
-        while k >= 1 && self.blocks[k - 1][j].is_none() {
-          k -= 1;
-        }
-
-        if k >= 1 && self.blocks[k - 1][j] == self.blocks[i][j] {
-          self.blocks[k - 1][j] = self.blocks[i][j].map(|x| x * 2);
-
-          success = true;
-          self.blocks[i][j] = None;
-        } else if k != i {
-          self.blocks[k][j] = self.blocks[i][j];
-        
-          success = true;
-          self.blocks[i][j] = None;
-        }
+       if let Some(value) = self.blocks[i][j] {
+         queue.push_back(value);
+         old_last_index = i + 1;
+         self.blocks[i][j] = None;
+       }
       }
+
+      let mut new_last_index = 0;
+
+      while !queue.is_empty() {
+        let mut front = queue.pop_front();
+
+        if let Some(second) = queue.front() {
+          if front == Some(*second) {
+            queue.pop_front();
+            front = front.map(|v| v * 2);
+          }
+        }
+
+        self.blocks[new_last_index][j] = front;
+        new_last_index += 1;
+      }
+
+      success = success || old_last_index != new_last_index;
     }
 
     success
@@ -49,25 +60,37 @@ impl Board {
     let mut success = false;
 
     for j in 0..self.width {
+      let mut queue: VecDeque<u32> = VecDeque::new();
+
+      let mut old_last_index = self.height;
+
       for i in (0..self.height).rev() {
-        let mut k = i;
-
-        while k + 1 < self.height && self.blocks[k + 1][j] == None {
-          k += 1;
-        }
-
-        if k + 1 < self.height && self.blocks[k + 1][j] == self.blocks[i][j] {
-          self.blocks[k + 1][j] = self.blocks[i][j].map(|x| x * 2);
-
-          success = true;
-          self.blocks[i][j] = None;
-        } else if k != i {
-          self.blocks[k][j] = self.blocks[i][j];
-
-          success = true;
+        if let Some(value) = self.blocks[i][j] {
+          queue.push_back(value);
+          old_last_index = i;
           self.blocks[i][j] = None;
         }
       }
+
+      let mut new_last_index = self.height - 1;
+
+      while !queue.is_empty() {
+        let mut front = queue.pop_front();
+
+        if let Some(second) = queue.front() {
+          if front == Some(*second) {
+            queue.pop_front();
+            front = front.map(|v| v * 2);
+          }
+        }
+
+        self.blocks[new_last_index][j] = front;
+        if new_last_index > 0 {
+          new_last_index -= 1;
+        }
+      }
+
+      success = success || old_last_index != new_last_index + 1;
     }
 
     success
@@ -77,25 +100,35 @@ impl Board {
     let mut success = false;
 
     for i in 0..self.height {
+      let mut queue: VecDeque<u32> = VecDeque::new();
+
+      let mut old_last_index = 0;
+
       for j in 0..self.width {
-        let mut k = j;
-
-        while k >= 1 && self.blocks[i][k - 1] == None {
-          k -= 1;
-        }
-
-        if k >= 1 && self.blocks[i][k - 1] == self.blocks[i][j] {
-          self.blocks[i][k - 1] = self.blocks[i][j].map(|x| x * 2);
-
-          success = true;
-          self.blocks[i][j] = None;
-        } else if k != j {
-          self.blocks[i][k] = self.blocks[i][j];
-
-          success = true;
+        if let Some(value) = self.blocks[i][j] {
+          queue.push_back(value);
+          old_last_index = j + 1;
           self.blocks[i][j] = None;
         }
       }
+
+      let mut new_last_index = 0;
+
+      while !queue.is_empty() {
+        let mut front = queue.pop_front();
+
+        if let Some(second) = queue.front() {
+          if front == Some(*second) {
+            queue.pop_front();
+            front = front.map(|v| v * 2);
+          }
+        }
+
+        self.blocks[i][new_last_index] = front;
+        new_last_index += 1;
+      }
+
+      success = success || old_last_index != new_last_index;
     }
 
     success
@@ -105,25 +138,37 @@ impl Board {
     let mut success = false;
 
     for i in 0..self.height {
+      let mut queue: VecDeque<u32> = VecDeque::new();
+
+      let mut old_last_index = self.width;
+
       for j in (0..self.width).rev() {
-        let mut k = j;
-
-        while k + 1 < self.width && self.blocks[i][k + 1] == None {
-          k += 1;
-        }
-
-        if k + 1 < self.width && self.blocks[i][k + 1] == self.blocks[i][j] {
-          self.blocks[i][k + 1] = self.blocks[i][j].map(|x| x * 2);
-
-          success = true;
-          self.blocks[i][j] = None;
-        } else if k != j {
-          self.blocks[i][k] = self.blocks[i][j];
-
-          success = true;
+        if let Some(value) = self.blocks[i][j] {
+          queue.push_back(value);
+          old_last_index = j;
           self.blocks[i][j] = None;
         }
       }
+
+      let mut new_last_index = self.width - 1;
+
+      while !queue.is_empty() {
+        let mut front = queue.pop_front();
+
+        if let Some(second) = queue.front() {
+          if front == Some(*second) {
+            queue.pop_front();
+            front = front.map(|v| v * 2);
+          }
+        }
+
+        self.blocks[i][new_last_index] = front;
+        if new_last_index > 0 {
+          new_last_index -= 1;
+        }
+      }
+
+      success = success || old_last_index != new_last_index + 1;
     }
 
     success

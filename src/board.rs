@@ -18,8 +18,9 @@ impl Board {
         }
     }
 
-    pub fn try_to_move_up(&mut self) -> bool {
+    pub fn try_to_move_up(&mut self) -> Option<u32> {
         let mut success = false;
+        let mut merged_block = 0;
 
         for j in 0..self.width {
             let mut queue: VecDeque<u32> = VecDeque::new();
@@ -43,6 +44,7 @@ impl Board {
                     if front == Some(*second) {
                         queue.pop_front();
                         front = front.map(|v| v * 2);
+                        merged_block += front.unwrap_or(0);
                     }
                 }
 
@@ -53,11 +55,16 @@ impl Board {
             success = success || old_last_index != new_last_index;
         }
 
-        success
+        if success {
+            Some(merged_block)
+        } else {
+            None
+        }
     }
 
-    pub fn try_to_move_down(&mut self) -> bool {
+    pub fn try_to_move_down(&mut self) -> Option<u32> {
         let mut success = false;
+        let mut merged_block = 0;
 
         for j in 0..self.width {
             let mut queue: VecDeque<u32> = VecDeque::new();
@@ -81,6 +88,7 @@ impl Board {
                     if front == Some(*second) {
                         queue.pop_front();
                         front = front.map(|v| v * 2);
+                        merged_block += front.unwrap_or(0);
                     }
                 }
 
@@ -93,11 +101,16 @@ impl Board {
             success = success || old_last_index != new_last_index + 1;
         }
 
-        success
+        if success {
+            Some(merged_block)
+        } else {
+            None
+        }
     }
 
-    pub fn try_to_move_left(&mut self) -> bool {
+    pub fn try_to_move_left(&mut self) -> Option<u32> {
         let mut success = false;
+        let mut merged_block = 0;
 
         for i in 0..self.height {
             let mut queue: VecDeque<u32> = VecDeque::new();
@@ -121,6 +134,7 @@ impl Board {
                     if front == Some(*second) {
                         queue.pop_front();
                         front = front.map(|v| v * 2);
+                        merged_block += front.unwrap_or(0);
                     }
                 }
 
@@ -131,11 +145,16 @@ impl Board {
             success = success || old_last_index != new_last_index;
         }
 
-        success
+        if success {
+            Some(merged_block)
+        } else {
+            None
+        }
     }
 
-    pub fn try_to_move_right(&mut self) -> bool {
+    pub fn try_to_move_right(&mut self) -> Option<u32> {
         let mut success = false;
+        let mut merged_block = 0;
 
         for i in 0..self.height {
             let mut queue: VecDeque<u32> = VecDeque::new();
@@ -159,6 +178,7 @@ impl Board {
                     if front == Some(*second) {
                         queue.pop_front();
                         front = front.map(|v| v * 2);
+                        merged_block += front.unwrap_or(0);
                     }
                 }
 
@@ -171,7 +191,11 @@ impl Board {
             success = success || old_last_index != new_last_index + 1;
         }
 
-        success
+        if success {
+            Some(merged_block)
+        } else {
+            None
+        }
     }
 
     fn pick_empty_index(&self) -> Option<(usize, usize)> {

@@ -92,12 +92,15 @@ fn main() -> Result<(), failure::Error> {
 
                     // status
                     {
-                        let mut message = "";
+                        let message;
+                        let score = format!("score: {}", game.score);
 
                         if game.win() {
                             message = "You win!";
                         } else if game.lose() {
                             message = "You lose!";
+                        } else {
+                            message = &score;
                         }
 
                         let block = Block::default().title("status").borders(Borders::ALL);

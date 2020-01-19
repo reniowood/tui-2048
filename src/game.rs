@@ -5,6 +5,7 @@ pub struct Game {
     pub board: Board,
     pub width: usize,
     pub height: usize,
+    pub score: u32,
 }
 
 impl Game {
@@ -19,6 +20,7 @@ impl Game {
             board: board,
             width: width,
             height: height,
+            score: 0,
         }
     }
 
@@ -31,27 +33,31 @@ impl Game {
     }
 
     pub fn move_up(&mut self) {
-        if self.board.try_to_move_up() {
+        self.board.try_to_move_up().map(|score| {
+            self.score += score;
             self.board.put_new_block();
-        }
+        });
     }
 
     pub fn move_down(&mut self) {
-        if self.board.try_to_move_down() {
+        self.board.try_to_move_down().map(|score| {
+            self.score += score;
             self.board.put_new_block();
-        }
+        });
     }
 
     pub fn move_left(&mut self) {
-        if self.board.try_to_move_left() {
+        self.board.try_to_move_left().map(|score| {
+            self.score += score;
             self.board.put_new_block();
-        }
+        });
     }
 
     pub fn move_right(&mut self) {
-        if self.board.try_to_move_right() {
+        self.board.try_to_move_right().map(|score| {
+            self.score += score;
             self.board.put_new_block();
-        }
+        });
     }
 
     pub fn print_board(&self) {

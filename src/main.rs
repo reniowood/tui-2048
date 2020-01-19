@@ -15,6 +15,13 @@ use tui::widgets::{Block, Borders, Paragraph, Text, Widget};
 use tui::Terminal;
 
 fn main() -> Result<(), failure::Error> {
+    let logo = r"
+  ___   ___  _  _   ___  
+ |__ \ / _ \| || | / _ \ 
+    ) | | | | || || (_) |
+   / /| | | |__   _> _ < 
+  / /_| |_| |  | || (_) |
+ |____|\___/   |_| \___/ ";
     // Terminal initialization
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = MouseTerminal::from(stdout);
@@ -26,39 +33,80 @@ fn main() -> Result<(), failure::Error> {
     let events = Events::new();
 
     // Game initialization
-    let mut game = Game::new(256, 4, 4);
+    let mut game = Game::new(2048, 4, 4);
 
     loop {
         terminal.draw(|mut f| {
-            let size = f.size();
-            Block::default().borders(Borders::ALL).render(&mut f, size);
-
             let chunks = Layout::default()
-                .direction(Direction::Vertical)
+                .direction(Direction::Horizontal)
                 .margin(0)
                 .constraints(
                     [
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(20),
+                        Constraint::Percentage(30),
+                        Constraint::Percentage(40),
+                        Constraint::Percentage(30),
                     ]
                     .as_ref(),
                 )
                 .split(f.size());
 
+            // game board
             {
                 let chunks = Layout::default()
-                    .direction(Direction::Horizontal)
+                    .direction(Direction::Vertical)
                     .margin(0)
                     .constraints(
                         [
-                            Constraint::Percentage(30),
-                            Constraint::Percentage(40),
-                            Constraint::Percentage(30),
+                            Constraint::Percentage(25),
+                            Constraint::Percentage(60),
+                            Constraint::Percentage(15),
                         ]
                         .as_ref(),
                     )
                     .split(chunks[1]);
+
+                // header
+                {
+                    let chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints(
+                            [Constraint::Percentage(20), Constraint::Percentage(80)].as_ref(),
+                        )
+                        .split(chunks[0]);
+
+                    let chunks = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints(
+                            [Constraint::Percentage(70), Constraint::Percentage(30)].as_ref(),
+                        )
+                        .split(chunks[1]);
+
+                    // title
+                    {
+                        Paragraph::new([Text::raw(logo)].iter())
+                            .block(Block::default())
+                            .alignment(Alignment::Left)
+                            .render(&mut f, chunks[0]);
+                    }
+
+                    // status
+                    {
+                        let mut message = "";
+
+                        if game.win() {
+                            message = "You win!";
+                        } else if game.lose() {
+                            message = "You lose!";
+                        }
+
+                        let block = Block::default().title("status").borders(Borders::ALL);
+
+                        Paragraph::new([Text::raw(message)].iter())
+                            .block(block)
+                            .alignment(Alignment::Center)
+                            .render(&mut f, chunks[1]);
+                    }
+                }
 
                 Block::default().render(&mut f, chunks[1]);
 

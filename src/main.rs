@@ -11,6 +11,7 @@ use termion::raw::IntoRawMode;
 use termion::screen::AlternateScreen;
 use tui::backend::TermionBackend;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
+use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, Text, Widget};
 use tui::Terminal;
 
@@ -129,12 +130,20 @@ fn main() -> Result<(), failure::Error> {
                                 .constraints(constraints.as_ref())
                                 .split(chunks[i]);
                             let block = Block::default().borders(Borders::ALL);
+
                             for j in 0..game.width {
                                 Paragraph::new(
-                                    [Text::raw(
+                                    [Text::styled(
                                         game.board.blocks[i][j]
                                             .map(|x| format!("{}", x))
                                             .unwrap_or("".to_string()),
+                                        Style::default().fg(Color::Rgb(
+                                            255,
+                                            game.board.blocks[i][j]
+                                                .map(|x| 128 + (128 / x) as u8)
+                                                .unwrap_or(0),
+                                            0,
+                                        )),
                                     )]
                                     .iter(),
                                 )

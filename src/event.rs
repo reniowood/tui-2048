@@ -10,8 +10,7 @@ pub enum Event<I> {
 }
 
 pub struct Events {
-    rx: mpsc::Receiver<Event<Key>>,
-    input_handle: thread::JoinHandle<()>,
+    rx: mpsc::Receiver<Event<Key>>
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -34,26 +33,26 @@ impl Events {
 
     pub fn with_config(config: Config) -> Events {
         let (tx, rx) = mpsc::channel();
-        let input_handle = {
-            let tx = tx.clone();
-            thread::spawn(move || {
-                let stdin = io::stdin();
-                for evt in stdin.keys() {
-                    match evt {
-                        Ok(key) => {
-                            if let Err(_) = tx.send(Event::Input(key)) {
-                                return;
-                            }
-                            if key == config.exit_key {
-                                return;
-                            }
+        
+        let tx = tx.clone();
+        thread::spawn(move || {
+            let stdin = io::stdin();
+            for evt in stdin.keys() {
+                match evt {
+                    Ok(key) => {
+                        if let Err(_) = tx.send(Event::Input(key)) {
+                            return;
                         }
-                        Err(_) => {}
+                        if key == config.exit_key {
+                            return;
+                        }
                     }
+                    Err(_) => {}
                 }
-            })
-        };
-        Events { rx, input_handle }
+            }
+        });
+            
+        Events { rx }
     }
 
     pub fn next(&self) -> Result<Event<Key>, mpsc::RecvError> {

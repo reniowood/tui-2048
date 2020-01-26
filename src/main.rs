@@ -1,3 +1,4 @@
+mod block;
 mod board;
 mod event;
 mod game;
@@ -135,18 +136,28 @@ fn main() -> Result<(), failure::Error> {
                             let block = Block::default().borders(Borders::ALL);
 
                             for j in 0..game.width {
+                                let value = game.board.blocks[i][j];
+
+                                let text;
+                                if value == 0 {
+                                    text = "".to_string();
+                                } else {
+                                    text = format!("{}", value);
+                                }
+
+                                let r = 255;
+                                let g;
+                                let b = 0;
+                                if value == 0 {
+                                    g = 0;
+                                } else {
+                                    g = 128 + (128 / value) as u8;
+                                }
+
                                 Paragraph::new(
                                     [Text::styled(
-                                        game.board.blocks[i][j]
-                                            .map(|x| format!("{}", x))
-                                            .unwrap_or("".to_string()),
-                                        Style::default().fg(Color::Rgb(
-                                            255,
-                                            game.board.blocks[i][j]
-                                                .map(|x| 128 + (128 / x) as u8)
-                                                .unwrap_or(0),
-                                            0,
-                                        )),
+                                        text,
+                                        Style::default().fg(Color::Rgb(r, g, b)),
                                     )]
                                     .iter(),
                                 )
@@ -174,8 +185,7 @@ fn main() -> Result<(), failure::Error> {
                         }
                     }
                 }
-            },
-            _ => {}
+            }
         };
     }
 

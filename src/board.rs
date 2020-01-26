@@ -1,12 +1,11 @@
 use rand::seq::SliceRandom;
-use rand::Rng;
-use std::collections::VecDeque;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Board {
-    width: usize,
-    height: usize,
-    pub blocks: Vec<Vec<Option<u32>>>,
+    pub width: usize,
+    pub height: usize,
+    pub blocks: Vec<Vec<u32>>,
+    pub updated: bool
 }
 
 impl Board {
@@ -14,196 +13,129 @@ impl Board {
         Board {
             width: width,
             height: height,
-            blocks: vec![vec![None; width]; height],
+            blocks: vec![vec![0; width]; height],
+            updated: false
         }
     }
 
-    pub fn try_to_move_up(&mut self) -> Option<u32> {
-        let mut success = false;
-        let mut merged_block = 0;
+    pub fn try_to_move_up(&self) -> Board {
+        let mut board = Board::new(self.width, self.height);
+        let mut merged = vec![vec![false; self.width]; self.height];
 
         for j in 0..self.width {
-            let mut queue: VecDeque<u32> = VecDeque::new();
-
-            let mut old_last_index = 0;
+            let mut k = 0;
 
             for i in 0..self.height {
-                if let Some(value) = self.blocks[i][j] {
-                    queue.push_back(value);
-                    old_last_index = i + 1;
-                    self.blocks[i][j] = None;
-                }
-            }
-
-            let mut new_last_index = 0;
-
-            while !queue.is_empty() {
-                let mut front = queue.pop_front();
-
-                if let Some(second) = queue.front() {
-                    if front == Some(*second) {
-                        queue.pop_front();
-                        front = front.map(|v| v * 2);
-                        merged_block += front.unwrap_or(0);
+                if self.blocks[i][j] > 0 {
+                    if k == 0 || board.blocks[k - 1][j] != self.blocks[i][j] || merged[k - 1][j] {
+                        board.blocks[k][j] = self.blocks[i][j];
+                        if k != i {
+                            board.updated = true;
+                        }
+                        k += 1;
+                    } else {
+                        board.blocks[k - 1][j] = board.blocks[k - 1][j] * 2;
+                        merged[k - 1][j] = true;
+                        board.updated = true;
                     }
                 }
-
-                self.blocks[new_last_index][j] = front;
-                new_last_index += 1;
             }
-
-            success = success || old_last_index != new_last_index;
         }
 
-        if success {
-            Some(merged_block)
-        } else {
-            None
-        }
+        board
     }
 
-    pub fn try_to_move_down(&mut self) -> Option<u32> {
-        let mut success = false;
-        let mut merged_block = 0;
+    pub fn try_to_move_down(&self) -> Board {
+        let mut board = Board::new(self.width, self.height);
+        let mut merged = vec![vec![false; self.width]; self.height];
 
         for j in 0..self.width {
-            let mut queue: VecDeque<u32> = VecDeque::new();
-
-            let mut old_last_index = self.height;
+            let mut k = self.height - 1;
 
             for i in (0..self.height).rev() {
-                if let Some(value) = self.blocks[i][j] {
-                    queue.push_back(value);
-                    old_last_index = i;
-                    self.blocks[i][j] = None;
-                }
-            }
-
-            let mut new_last_index = self.height - 1;
-
-            while !queue.is_empty() {
-                let mut front = queue.pop_front();
-
-                if let Some(second) = queue.front() {
-                    if front == Some(*second) {
-                        queue.pop_front();
-                        front = front.map(|v| v * 2);
-                        merged_block += front.unwrap_or(0);
+                if self.blocks[i][j] > 0 {
+                    if k == self.height - 1 || board.blocks[k + 1][j] != self.blocks[i][j] || merged[k + 1][j] {
+                        board.blocks[k][j] = self.blocks[i][j];
+                        if k != i {
+                            board.updated = true;
+                        }
+                        if k > 0 {
+                            k -= 1;
+                        }
+                    } else {
+                        board.blocks[k + 1][j] = board.blocks[k + 1][j] * 2;
+                        merged[k + 1][j] = true;
+                        board.updated = true;
                     }
                 }
-
-                self.blocks[new_last_index][j] = front;
-                if new_last_index > 0 {
-                    new_last_index -= 1;
-                }
             }
-
-            success = success || old_last_index != new_last_index + 1;
         }
 
-        if success {
-            Some(merged_block)
-        } else {
-            None
-        }
+        board
     }
 
-    pub fn try_to_move_left(&mut self) -> Option<u32> {
-        let mut success = false;
-        let mut merged_block = 0;
+    pub fn try_to_move_left(&self) -> Board {
+        let mut board = Board::new(self.width, self.height);
+        let mut merged = vec![vec![false; self.width]; self.height];
 
         for i in 0..self.height {
-            let mut queue: VecDeque<u32> = VecDeque::new();
-
-            let mut old_last_index = 0;
+            let mut k = 0;
 
             for j in 0..self.width {
-                if let Some(value) = self.blocks[i][j] {
-                    queue.push_back(value);
-                    old_last_index = j + 1;
-                    self.blocks[i][j] = None;
-                }
-            }
-
-            let mut new_last_index = 0;
-
-            while !queue.is_empty() {
-                let mut front = queue.pop_front();
-
-                if let Some(second) = queue.front() {
-                    if front == Some(*second) {
-                        queue.pop_front();
-                        front = front.map(|v| v * 2);
-                        merged_block += front.unwrap_or(0);
+                if self.blocks[i][j] > 0 {
+                    if k == 0 || board.blocks[i][k - 1] != self.blocks[i][j] || merged[i][k - 1] {
+                        board.blocks[i][k] = self.blocks[i][j];
+                        if k != j {
+                            board.updated = true;
+                        }
+                        k += 1;
+                    } else {
+                        board.blocks[i][k - 1] = board.blocks[i][k - 1] * 2;
+                        merged[i][k - 1] = true;
+                        board.updated = true;
                     }
                 }
-
-                self.blocks[i][new_last_index] = front;
-                new_last_index += 1;
             }
-
-            success = success || old_last_index != new_last_index;
         }
 
-        if success {
-            Some(merged_block)
-        } else {
-            None
-        }
+        board
     }
 
-    pub fn try_to_move_right(&mut self) -> Option<u32> {
-        let mut success = false;
-        let mut merged_block = 0;
+    pub fn try_to_move_right(&self) -> Board {
+        let mut board = Board::new(self.width, self.height);
+        let mut merged = vec![vec![false; self.width]; self.height];
 
         for i in 0..self.height {
-            let mut queue: VecDeque<u32> = VecDeque::new();
-
-            let mut old_last_index = self.width;
+            let mut k = self.width - 1;
 
             for j in (0..self.width).rev() {
-                if let Some(value) = self.blocks[i][j] {
-                    queue.push_back(value);
-                    old_last_index = j;
-                    self.blocks[i][j] = None;
-                }
-            }
-
-            let mut new_last_index = self.width - 1;
-
-            while !queue.is_empty() {
-                let mut front = queue.pop_front();
-
-                if let Some(second) = queue.front() {
-                    if front == Some(*second) {
-                        queue.pop_front();
-                        front = front.map(|v| v * 2);
-                        merged_block += front.unwrap_or(0);
+                if self.blocks[i][j] > 0 {
+                    if k == self.width - 1 || board.blocks[i][k + 1] != self.blocks[i][j] || merged[i][k + 1] {
+                        board.blocks[i][k] = self.blocks[i][j];
+                        if k != j {
+                            board.updated = true;
+                        }
+                        if k > 0 {
+                            k -= 1;
+                        }
+                    } else {
+                        board.blocks[i][k + 1] = board.blocks[i][k + 1] * 2;
+                        merged[i][k + 1] = true;
+                        board.updated = true;
                     }
                 }
-
-                self.blocks[i][new_last_index] = front;
-                if new_last_index > 0 {
-                    new_last_index -= 1;
-                }
             }
-
-            success = success || old_last_index != new_last_index + 1;
         }
 
-        if success {
-            Some(merged_block)
-        } else {
-            None
-        }
+        board
     }
 
-    fn pick_empty_index(&self) -> Option<(usize, usize)> {
+    pub fn pick_empty_index(&self) -> Option<(usize, usize)> {
         let mut indexes = Vec::new();
 
         for i in 0..self.height {
             for j in 0..self.width {
-                if self.blocks[i as usize][j as usize] == None {
+                if self.blocks[i][j] == 0 {
                     indexes.push((i, j));
                 }
             }
@@ -214,53 +146,28 @@ impl Board {
         indexes.choose(&mut rng).map(|index| (index.0, index.1))
     }
 
-    fn create_new_block(&self) -> u32 {
-        let mut rng = rand::thread_rng();
-
-        rng.gen_range(1, 3) * 2
-    }
-
     pub fn has_empty_block(&self) -> bool {
         self.pick_empty_index().is_some()
     }
 
-    pub fn put_new_block(&mut self) -> Option<(usize, usize, u32)> {
-        let block = self.create_new_block();
-        let index = self.pick_empty_index()?;
+    pub fn put_new_block(self, row: usize, col: usize, value: u32) -> Board {
+        let mut board = self.clone();
 
-        self.blocks[index.0 as usize][index.1 as usize] = Some(block);
-        Some((index.0, index.1, block))
+        board.blocks[row][col] = value;
+
+        board
     }
 
     pub fn has_block_with(&self, value: u32) -> bool {
         for row in &self.blocks {
             for block in row {
-                if *block == Some(value) {
+                if *block == value {
                     return true;
                 }
             }
         }
 
         return false;
-    }
-
-    pub fn print(&self) {
-        for row in &self.blocks {
-            for block in row {
-                match block {
-                    Some(value) => print!("{:4}", value),
-                    None => print!("    "),
-                }
-                print!("|");
-            }
-            println!("")
-        }
-    }
-
-    fn eq(&self, other: &Board) -> bool {
-        return self.width == other.width
-            && self.height == other.height
-            && self.blocks == other.blocks;
     }
 }
 
@@ -269,7 +176,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_Board_new() {
+    fn test_new() {
         let width = 4;
         let height = 4;
         let board = Board::new(width, height);
@@ -281,9 +188,494 @@ mod tests {
 
         for row in board.blocks {
             for block in row {
-                assert_eq!(block, None);
+                assert_eq!(block, 0);
             }
         }
     }
-}
 
+    #[test]
+    fn test_try_to_move_up_merge() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![0, 2, 4, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 4, 8, 0],
+            vec![0, 2, 2, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_up();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_up_merge_only_once() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![0, 2, 4, 0],
+            vec![0, 0, 4, 0],
+            vec![0, 0, 4, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 4, 8, 0],
+            vec![0, 2, 8, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_up();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_up_move() {
+        let blocks = vec![
+            vec![0, 4, 0, 0],
+            vec![0, 2, 4, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![0, 2, 2, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_up();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_up_not_updated() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![0, 2, 2, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![0, 2, 2, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_up();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_down_merge() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![2, 2, 4, 0],
+            vec![0, 4, 2, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 4, 0, 0],
+            vec![0, 2, 8, 0],
+            vec![2, 4, 2, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_down();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_down_merge_only_once() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![2, 2, 4, 0],
+            vec![0, 4, 4, 0],
+            vec![0, 0, 4, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 4, 0, 0],
+            vec![0, 2, 8, 0],
+            vec![2, 4, 8, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_down();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_down_move() {
+        let blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 4, 4, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 0, 4, 2],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 0, 4, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 4, 4, 2],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_down();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_down_not_updated() {
+        let blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 4, 4, 0],
+            vec![0, 2, 2, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 4, 4, 0],
+            vec![0, 2, 2, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_down();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_down_when_column_is_full() {
+        let blocks = vec![
+            vec![4, 0, 0, 0],
+            vec![2, 0, 0, 0],
+            vec![8, 0, 0, 0],
+            vec![16, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![4, 0, 0, 0],
+            vec![2, 0, 0, 0],
+            vec![8, 0, 0, 0],
+            vec![16, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_down();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_left_merge() {
+        let blocks = vec![
+            vec![4, 4, 0, 0],
+            vec![4, 0, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![8, 0, 0, 0],
+            vec![4, 0, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_left();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_left_merge_only_once() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![2, 2, 4, 0],
+            vec![0, 4, 2, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![8, 0, 0, 0],
+            vec![4, 4, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_left();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_left_move() {
+        let blocks = vec![
+            vec![2, 0, 0, 0],
+            vec![0, 4, 0, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 0, 4, 2],
+        ];
+        let expected_blocks = vec![
+            vec![2, 0, 0, 0],
+            vec![4, 0, 0, 0],
+            vec![2, 0, 0, 0],
+            vec![4, 2, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_left();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_left_not_updated() {
+        let blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![2, 0, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![2, 0, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_left();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_right_merge() {
+        let blocks = vec![
+            vec![4, 4, 0, 0],
+            vec![4, 0, 0, 0],
+            vec![4, 2, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 8],
+            vec![0, 0, 0, 4],
+            vec![0, 0, 4, 2],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_right();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_right_merge_only_once() {
+        let blocks = vec![
+            vec![0, 4, 4, 0],
+            vec![2, 2, 4, 0],
+            vec![0, 4, 2, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 8],
+            vec![0, 0, 4, 4],
+            vec![0, 0, 4, 2],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_right();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_right_move() {
+        let blocks = vec![
+            vec![2, 0, 0, 0],
+            vec![0, 4, 0, 0],
+            vec![0, 0, 2, 0],
+            vec![0, 0, 4, 2],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 2],
+            vec![0, 0, 0, 4],
+            vec![0, 0, 0, 2],
+            vec![0, 0, 4, 2],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_right();
+
+        assert!(next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_right_not_updated() {
+        let blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 2],
+            vec![0, 0, 4, 2],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 2],
+            vec![0, 0, 4, 2],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_right();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_try_to_move_right_when_row_is_full() {
+        let blocks = vec![
+            vec![4, 2, 8, 16],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+        let expected_blocks = vec![
+            vec![4, 2, 8, 16],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+            vec![0, 0, 0, 0],
+        ];
+
+        let board = Board {
+            width: 4,
+            height: 4,
+            blocks: blocks,
+            updated: false
+        };
+        let next_board = board.try_to_move_right();
+
+        assert!(!next_board.updated);
+        assert_eq!(next_board.blocks, expected_blocks);
+    }
+}
